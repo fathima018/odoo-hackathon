@@ -1,0 +1,27 @@
+{
+  "name": "dayflow-hrms-backend",
+  "version": "1.0.0",
+  "description": "Dayflow - Human Resource Management System (HRMS) Database & REST API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:init": "node database/init.js"
+  },
+  "keywords": [
+    "hrms",
+    "database",
+    "express",
+    "sqlite",
+    "odoo-hackathon"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  }
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Human Resource Management System (HRMS)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="brand">
+            <span>Dayflow</span>
+            <span class="brand-badge">HRMS</span>
+        </div>
+        <div class="user-nav">
+            <div id="quickLoginBar" class="demo-account-bar" style="margin-bottom:0; padding:0.4rem 1rem;">
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-right:0.5rem;">Quick Demo Login:</span>
+                <button class="btn-demo" onclick="loginDemo('admin@dayflow.com')">🔑 Admin (Alex)</button>
+                <button class="btn-demo" style="background:#3b82f6;" onclick="loginDemo('john.doe@dayflow.com')">👤 Employee (John)</button>
+            </div>
+            <div id="userInfoPill" class="user-pill hidden">
+                <img id="userAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb" class="user-avatar" alt="Avatar">
+                <span id="userName" style="font-weight:700;">Alex Vance</span>
+                <span id="userRoleBadge" class="badge badge-present">ADMIN</span>
+                <button onclick="logout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:700; margin-left:0.5rem;">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="nav-item active" onclick="switchTab('dashboard')">
+                <span>📊</span> Overview & Analytics
+            </div>
+            <div class="nav-item" onclick="switchTab('attendance')">
+                <span>⏱</span> Attendance Tracking
+            </div>
+            <div class="nav-item" onclick="switchTab('leaves')">
+                <span>🌴</span> Leave Management
+            </div>
+            <div class="nav-item" onclick="switchTab('employees')">
+                <span>👤</span> Employees Directory
+            </div>
+            <div class="nav-item" onclick="switchTab('payroll')">
+                <span>💵</span> Payroll & Salary Slips
+            </div>
+            <div class="nav-item" onclick="switchTab('api-explorer')">
+                <span>🔌</span> Database API Explorer
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard">
+                <h2 style="margin-bottom: 1.5rem;">Dashboard Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-title">Total Employees</span>
+                        <span id="statTotalEmployees" class="stat-value">3</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Present Today</span>
+                        <span id="statPresentToday" class="stat-value" style="color:var(--accent);">2</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">On Leave Today</span>
+                        <span id="statOnLeaveToday" class="stat-value" style="color:var(--info);">1</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Pending Leave Approvals</span>
+                        <span id="statPendingLeaves" class="stat-value" style="color:var(--warning);">1</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-title">Monthly Payroll Total</span>
+                        <span id="statPayrollTotal" class="stat-value" style="color:#a855f7;">$22,950</span>
+                    </div>
+                </div>
+
+                <div class="table-card" style="margin-bottom:2rem;">
+                    <div class="table-header">
+                        <h3>Attendance & Activity Report Summary</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Department</th>
+                                <th>Present Days</th>
+                                <th>Half Days</th>
+                                <th>Leave Days</th>
+                                <th>Total Hours Logged</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceReportBody">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Recent Activity & Notifications</h3>
+                    </div>
+                    <div id="recentActivityList" style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: ATTENDANCE -->
+            <section id="tab-attendance" class="hidden">
+                <h2 style="margin-bottom: 1.5rem;">Attendance Tracking</h2>
+                
+                <div class="table-card" style="background:linear-gradient(135deg, rgba(99,102,241,0.1), rgba(16,185,129,0.05)); margin-bottom:2rem; border-color:var(--primary);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 style="font-size:1.4rem; margin-bottom:0.25rem;">Daily Check-In / Check-Out</h3>
+                            <p style="color:var(--text-muted); font-size:0.9rem;">Record your daily attendance status with live timestamp logging.</p>
+                        </div>
+                        <div style="display:flex; gap:1rem;">
+                            <button id="btnCheckIn" class="btn btn-success" onclick="doCheckIn()">🟢 Check In</button>
+                            <button id="btnCheckOut" class="btn btn-danger" onclick="doCheckOut()">🔴 Check Out</button>
+                        </div>
+                    </div>
+                    <div id="attendanceMsg" style="margin-top:1rem; font-weight:700;"></div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3 id="attendanceTableTitle">Attendance Logs</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee / ID</th>
+                                <th>Date</th>
+                                <th>Check In</th>
+                                <th>Check Out</th>
+                                <th>Hours</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 3: LEAVE MANAGEMENT -->
+            <section id="tab-leaves" class="hidden">
+                <h2 style="margin-bottom: 1.5rem;">Leave & Time-Off Management</h2>
+
+                <div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.5rem;">
+                    <!-- Apply Form -->
+                    <div class="table-card">
+                        <h3>Apply for Time-Off</h3>
+                        <form id="leaveForm" onsubmit="submitLeave(event)" style="margin-top:1rem;">
+                            <div class="form-group">
+                                <label>Leave Type</label>
+                                <select id="leaveType" required>
+                                    <option value="Paid">Paid Leave</option>
+                                    <option value="Sick">Sick Leave</option>
+                                    <option value="Unpaid">Unpaid Leave</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="leaveStartDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" id="leaveEndDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Reason / Remarks</label>
+                                <textarea id="leaveReason" rows="3" placeholder="Reason for time off..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width:100%;">Submit Request</button>
+                        </form>
+                    </div>
+
+                    <!-- Leave List / Approval Queue -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3 id="leaveTableTitle">Leave Applications & Approval Workflow</h3>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Dates</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Action / Feedback</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaveTableBody">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: EMPLOYEES DIRECTORY -->
+            <section id="tab-employees" class="hidden">
+                <h2 style="margin-bottom: 1.5rem;">Employee Profiles Directory</h2>
+                <div class="table-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Employee ID</th>
+                                <th>Department</th>
+                                <th>Job Title</th>
+                                <th>Role</th>
+                                <th>Net Salary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 5: PAYROLL -->
+            <section id="tab-payroll" class="hidden">
+                <h2 style="margin-bottom: 1.5rem;">Payroll & Salary Control</h2>
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Salary Breakdown & Compensation Records</h3>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Base Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Frequency</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payrollTableBody">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 6: API EXPLORER -->
+            <section id="tab-api-explorer" class="hidden">
+                <h2 style="margin-bottom: 1.5rem;">Database REST API Inspector</h2>
+                <div style="display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/auth/me')">GET /api/auth/me</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/employees')">GET /api/employees</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/attendance/all')">GET /api/attendance/all</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/leaves/all')">GET /api/leaves/all</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/reports/attendance')">GET /api/reports/attendance</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/payroll/slip/2')">GET /api/payroll/slip/2</button>
+                    <button class="btn btn-primary" onclick="fetchApiEndpoint('/api/dashboard/stats')">GET /api/dashboard/stats</button>
+                </div>
+                <div class="table-card">
+                    <h4 style="margin-bottom:0.75rem; color:var(--text-muted);">JSON Response Data</h4>
+                    <pre id="apiJsonViewer" style="background:#090d16; padding:1.25rem; border-radius:10px; color:#34d399; font-family:monospace; font-size:0.9rem; overflow-x:auto; max-height:500px; border:1px solid var(--border-color);"></pre>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Salary Slip Modal -->
+    <div id="salarySlipModal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); display:flex; justify-content:center; align-items:center; z-index:999;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-color); border-radius:16px; width:90%; max-width:650px; padding:2rem; box-shadow:0 25px 50px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1.5rem;">
+                <h3 style="color:#fff;">📄 Official Employee Salary Slip</h3>
+                <button onclick="closeSalarySlipModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="salarySlipModalContent"></div>
+            <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+                <button class="btn btn-primary" onclick="window.print()">🖨 Print / Download PDF</button>
+                <button class="btn" style="background:var(--border-color); color:#fff;" onclick="closeSalarySlipModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
