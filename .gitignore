@@ -1,12 +1,15 @@
 # Python virtual environment
 backend/venv/
+.venv/
 
 # Python cache
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Environment variables
 .env
+*.env
 
 # VS Code
 .vscode/
