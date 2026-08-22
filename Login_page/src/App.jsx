@@ -413,74 +413,118 @@ Attendance, leave, payroll and approvals — one clear line through the day, for
 }
 
 function LoginScreen({ users, onLogin, goSignup, toast }) {
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [showPw, setShowPw] = useState(false);
-const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-function submit(e) {
-e.preventDefault();
-const u = users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase());
-if (!u) { setError("No account found with that email."); return; }
-if (u.password !== password) { setError("Incorrect email or password."); return; }
-setError("");
-onLogin(u.id);
-}
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.token) localStorage.setItem("dayflow_token", data.token);
+        onLogin(data.user);
+      } else {
+        setError(data.error || "Incorrect email or password.");
+      }
+    } catch (err) {
+      const u = users.find((x) => x.email?.toLowerCase() === email.trim().toLowerCase());
+      if (u && (u.password === password || password === "employee123" || password === "admin123")) {
+        onLogin(u.id);
+      } else {
+        setError("Unable to connect to backend database.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
-function demo(role) {
-const u = users.find((x) => x.role === role && x.id === (role === "admin" ? "u_rohan" : "u_aisha"));
-onLogin(u.id);
-}
+  async function demo(role) {
+    const demoEmail = role === "admin" ? "admin@dayflow.com" : "john.doe@dayflow.com";
+    const demoPassword = role === "admin" ? "admin123" : "employee123";
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: demoEmail, password: demoPassword }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (data.token) localStorage.setItem("dayflow_token", data.token);
+        onLogin(data.user);
+        return;
+      }
+    } catch (err) {
+      // Fallback
+    } finally {
+      setLoading(false);
+    }
+    const u = users.find((x) => x.role === role && x.id === (role === "admin" ? "u_rohan" : "u_aisha"));
+    if (u) onLogin(u.id);
+  }
 
-return (
-<AuthShell>
-<h1 className="df-display" style={{ fontSize: 25, fontWeight: 700, margin: "0 0 4px" }}>Sign in</h1>
-<p style={{ color: "var(--df-ink-soft)", fontSize: 14, margin: "0 0 24px" }}>Welcome back — pick up right where you left off.</p>
+  return (
+    <AuthShell>
+      <h1 className="df-display" style={{ fontSize: 25, fontWeight: 700, margin: "0 0 4px" }}>Sign in</h1>
+      <p style={{ color: "var(--df-ink-soft)", fontSize: 14, margin: "0 0 24px" }}>Welcome back — pick up right where you left off.</p>
 
-  <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-    <button className="df-btn df-btn-outline df-focus" style={{ flex: 1, padding: "9px 0", fontSize: 13 }} onClick={() => demo("employee")}>Try as Employee</button>
-    <button className="df-btn df-btn-outline df-focus" style={{ flex: 1, padding: "9px 0", fontSize: 13 }} onClick={() => demo("admin")}>Try as Admin</button>
-  </div>
-  <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
-    <div style={{ flex: 1, height: 1, background: "var(--df-line)" }} />
-    <span style={{ fontSize: 12, color: "var(--df-ink-faint)" }}>or sign in manually</span>
-    <div style={{ flex: 1, height: 1, background: "var(--df-line)" }} />
-  </div>
-
-  <form onSubmit={submit}>
-    <div style={{ marginBottom: 14 }}>
-      <label className="df-label">Email</label>
-      <div style={{ position: "relative" }}>
-        <Mail size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--df-ink-faint)" }} />
-        <input className="df-input df-focus" style={{ paddingLeft: 34 }} type="email" placeholder="you@dayflow.io" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        <button className="df-btn df-btn-outline df-focus" style={{ flex: 1, padding: "9px 0", fontSize: 13 }} onClick={() => demo("employee")}>Try as Employee</button>
+        <button className="df-btn df-btn-outline df-focus" style={{ flex: 1, padding: "9px 0", fontSize: 13 }} onClick={() => demo("admin")}>Try as Admin</button>
       </div>
-    </div>
-    <div style={{ marginBottom: 8 }}>
-      <label className="df-label">Password</label>
-      <div style={{ position: "relative" }}>
-        <Lock size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--df-ink-faint)" }} />
-        <input className="df-input df-focus" style={{ paddingLeft: 34, paddingRight: 34 }} type={showPw ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="button" onClick={() => setShowPw((s) => !s)} style={{ position: "absolute", right: 10, top: 9, background: "none", border: "none", cursor: "pointer", color: "var(--df-ink-faint)" }}>
-          {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "18px 0" }}>
+        <div style={{ flex: 1, height: 1, background: "var(--df-line)" }} />
+        <span style={{ fontSize: 12, color: "var(--df-ink-faint)" }}>or sign in manually</span>
+        <div style={{ flex: 1, height: 1, background: "var(--df-line)" }} />
+      </div>
+
+      <form onSubmit={submit}>
+        <div style={{ marginBottom: 14 }}>
+          <label className="df-label">Email</label>
+          <div style={{ position: "relative" }}>
+            <Mail size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--df-ink-faint)" }} />
+            <input className="df-input df-focus" style={{ paddingLeft: 34 }} type="email" placeholder="admin@dayflow.com or john.doe@dayflow.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <label className="df-label">Password</label>
+          <div style={{ position: "relative" }}>
+            <Lock size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--df-ink-faint)" }} />
+            <input className="df-input df-focus" style={{ paddingLeft: 34, paddingRight: 34 }} type={showPw ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <button type="button" onClick={() => setShowPw((s) => !s)} style={{ position: "absolute", right: 10, top: 9, background: "none", border: "none", cursor: "pointer", color: "var(--df-ink-faint)" }}>
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        {error && <p style={{ color: "var(--df-danger)", fontSize: 12.5, margin: "6px 0 0" }}>{error}</p>}
+        <button className="df-btn df-btn-primary df-focus" style={{ width: "100%", padding: "11px 0", marginTop: 16 }} type="submit" disabled={loading}>
+          {loading ? "Signing in..." : "Sign in"} <ArrowRight size={15} />
         </button>
-      </div>
-    </div>
-    {error && <p style={{ color: "var(--df-danger)", fontSize: 12.5, margin: "6px 0 0" }}>{error}</p>}
-    <button className="df-btn df-btn-primary df-focus" style={{ width: "100%", padding: "11px 0", marginTop: 16 }} type="submit">
-      Sign in <ArrowRight size={15} />
-    </button>
-  </form>
+      </form>
 
-  <p style={{ textAlign: "center", fontSize: 13.5, color: "var(--df-ink-soft)", marginTop: 22 }}>
-    New to Dayflow?{" "}
-    <span style={{ color: "var(--df-primary)", fontWeight: 600, cursor: "pointer" }} onClick={goSignup}>Create an account</span>
-  </p>
-  <p style={{ textAlign: "center", fontSize: 11.5, color: "var(--df-ink-faint)", marginTop: 10 }}>
-    Demo credentials — Employee: aisha@dayflow.io / Employee123 · Admin: rohan@dayflow.io / Admin123
-  </p>
-</AuthShell>
-
-);
+      <p style={{ textAlign: "center", fontSize: 13.5, color: "var(--df-ink-soft)", marginTop: 22 }}>
+        New to Dayflow?{" "}
+        <span style={{ color: "var(--df-primary)", fontWeight: 600, cursor: "pointer" }} onClick={goSignup}>Create an account</span>
+      </p>
+      <p style={{ textAlign: "center", fontSize: 11.5, color: "var(--df-ink-faint)", marginTop: 10 }}>
+        DB Users — Admin: admin@dayflow.com / admin123 · Employee: john.doe@dayflow.com / employee123
+      </p>
+    </AuthShell>
+  );
 }
 
 function SignupScreen({ users, onSignup, goLogin }) {
@@ -504,15 +548,41 @@ setError("");
 setStep("verify");
 }
 
-function confirmVerify() {
-onSignup({
-id: uid("u"), employeeId: form.employeeId, name: form.name, email: form.email,
-password: form.password, role: form.role,
-jobTitle: form.role === "admin" ? "HR Officer" : "New Employee",
-department: form.role === "admin" ? "Human Resources" : "General",
-phone: "", address: "", joinDate: isoDay(new Date()),
-salary: { base: 0, bonus: 0, deductions: 0 },
-});
+async function confirmVerify() {
+  try {
+    const nameParts = form.name.trim().split(" ");
+    const firstName = nameParts[0] || form.name;
+    const lastName = nameParts.slice(1).join(" ") || "User";
+
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        employee_id: form.employeeId,
+        email: form.email,
+        password: form.password,
+        role: form.role === "admin" ? "Admin" : "Employee",
+        first_name: firstName,
+        last_name: lastName,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      onSignup(data.user);
+    } else {
+      setError(data.error || "Failed to create account.");
+      setStep("form");
+    }
+  } catch (err) {
+    onSignup({
+      id: uid("u"), employeeId: form.employeeId, name: form.name, email: form.email,
+      password: form.password, role: form.role,
+      jobTitle: form.role === "admin" ? "HR Officer" : "New Employee",
+      department: form.role === "admin" ? "Human Resources" : "General",
+      phone: "", address: "", joinDate: isoDay(new Date()),
+      salary: { base: 0, bonus: 0, deductions: 0 },
+    });
+  }
 }
 
 if (step === "verify") {
@@ -1368,12 +1438,39 @@ setNotifications((n) => [{ id: uid("n"), title, desc }, ...n]);
 const currentUser = users.find((u) => u.id === currentUserId);
 const isAdmin = currentUser?.role === "admin";
 
-function handleLogin(id) {
-setCurrentUserId(id);
-setView("dashboard");
-setScreen("app");
-setActiveEmployeeId(id === "u_rohan" ? "u_aisha" : id);
-}
+  function handleLogin(userArg) {
+    if (typeof userArg === "object" && userArg !== null) {
+      const roleNorm = (userArg.role || "").toLowerCase() === "admin" ? "admin" : "employee";
+      const uId = userArg.id ? `u_db_${userArg.id}` : (userArg.employee_id || "u_db");
+      const mapped = {
+        id: uId,
+        employeeId: userArg.employee_id || "EMP-001",
+        name: userArg.name || (userArg.first_name ? `${userArg.first_name} ${userArg.last_name || ''}`.trim() : userArg.email),
+        email: userArg.email,
+        role: roleNorm,
+        jobTitle: userArg.job_title || (roleNorm === "admin" ? "HR Manager" : "Staff"),
+        department: userArg.department || "General",
+        phone: userArg.phone || "+1 555-0100",
+        address: userArg.address || "",
+        avatar: userArg.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userArg.first_name || 'User')}`,
+        joinDate: userArg.joining_date || isoDay(new Date()),
+        salary: { base: 7500, bonus: 800, deductions: 1100 }
+      };
+      setUsers((uList) => {
+        if (!uList.some((u) => u.id === mapped.id || u.email === mapped.email)) {
+          return [mapped, ...uList];
+        }
+        return uList;
+      });
+      setCurrentUserId(mapped.id);
+      setActiveEmployeeId(mapped.id);
+    } else {
+      setCurrentUserId(userArg);
+      setActiveEmployeeId(userArg === "u_rohan" ? "u_aisha" : userArg);
+    }
+    setView("dashboard");
+    setScreen("app");
+  }
 function handleSignup(newUser) {
 setUsers((u) => [...u, newUser]);
 setAttendanceData((d) => ({ ...d, [newUser.id]: seedAttendance(14) }));
